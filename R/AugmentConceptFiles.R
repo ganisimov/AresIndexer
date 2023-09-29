@@ -35,7 +35,14 @@ augmentConceptFiles <- function(releaseFolder) {
 
   if (file.exists(dataQualityResultsFile)) {
     writeLines("updating concept files with data quality results")
-    dataQualityResults <- jsonlite::fromJSON(dataQualityResultsFile)
+    # dataQualityResults <- jsonlite::fromJSON(dataQualityResultsFile)
+    ## ensure to get expected column names
+    ## warning is generated if columns are already in snake case
+    dataQualityResults <- DataQualityDashboard::convertJsonResultsFileCase(
+      jsonFilePath = dataQualityResultsFile,
+      writeToFile = FALSE,
+      targetCase = "snake"
+    )
     results <- dataQualityResults$CheckResults
 
     # augment achilles concept files with data quality failure count for relevant concept checks

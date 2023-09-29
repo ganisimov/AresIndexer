@@ -71,8 +71,17 @@ buildDataQualityHistoryIndex <-
       resultFile <- file.path(directory, "dq-result.json")
       if (file.exists(resultFile)) {
         writeLines(paste("processing", resultFile))
-        fileContents <- readLines(resultFile, warn = FALSE)
-        resultJson <- jsonlite::fromJSON(fileContents)
+        # fileContents <- readLines(resultFile, warn = FALSE)
+        # resultJson <- jsonlite::fromJSON(fileContents)
+
+        ## ensure to get expected column names
+        ## warning is generated if columns are already in snake case
+        resultJson <- DataQualityDashboard::convertJsonResultsFileCase(
+          jsonFilePath = resultFile,
+          writeToFile = FALSE,
+          targetCase = "snake"
+        )
+
         addResultsToIndex(resultJson)
       } else {
         writeLines(paste("missing", resultFile))

@@ -50,7 +50,12 @@ buildDataQualityIndex <- function(sourceFolders, outputFolder) {
 
       # process each data quality result file
       if (file.exists(dataQualityResultsFile)) {
-        dataQualityResults <- jsonlite::fromJSON(dataQualityResultsFile)
+        # dataQualityResults <- jsonlite::fromJSON(dataQualityResultsFile)
+        dataQualityResults <- DataQualityDashboard::convertJsonResultsFileCase(
+          jsonFilePath = dataQualityResultsFile,
+          writeToFile = FALSE,
+          targetCase = "snake"
+        )
         results <- dataQualityResults$CheckResults
 
         # for each release, generate a summary of failures by cdm_table_name

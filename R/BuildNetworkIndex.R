@@ -75,7 +75,12 @@ buildNetworkIndex <- function(sourceFolders, outputFolder) {
 
 			# add data quality details
 			if (file.exists(dataQualityResultsFile)) {
-				dataQualityResults <- jsonlite::fromJSON(dataQualityResultsFile)
+				# dataQualityResults <- jsonlite::fromJSON(dataQualityResultsFile)
+				dataQualityResults <- DataQualityDashboard::convertJsonResultsFileCase(
+					jsonFilePath = dataQualityResultsFile,
+					writeToFile = FALSE,
+					targetCase = "snake"
+				)
 
 				# add person results
 				if (file.exists(personResultsFile)) {

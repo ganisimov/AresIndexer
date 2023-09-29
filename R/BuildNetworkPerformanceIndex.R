@@ -55,7 +55,12 @@ buildNetworkPerformanceIndex <-
             }
 
             if (dataQualityResultsFileExists & achillesPerformanceFileExists) {
-              dqdData <- jsonlite::fromJSON(dataQualityResultsFile)
+              # dqdData <- jsonlite::fromJSON(dataQualityResultsFile)
+              dqdData <- DataQualityDashboard::convertJsonResultsFileCase(
+                jsonFilePath = dataQualityResultsFile,
+                writeToFile = FALSE,
+                targetCase = "snake"
+              )
               dqdData <- as.data.frame(dqdData)
 
               performanceData <- read.csv(achillesPerformanceFile)
