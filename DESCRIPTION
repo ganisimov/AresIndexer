@@ -7,8 +7,8 @@ Authors@R: c(
 	person("Frank", "DeFalco", , "fdefalco@ohdsi.org", role = c("aut", "cre"))
 	)
 Maintainer: Frank J DeFalco <fdefalco@ohdsi.org>
-Description: The ARES Indexer creates a set of files used by the ARES framework to aid 
-    in the exploration of observational research. ARES Indexer leverages output 
+Description: The ARES Indexer creates a set of files used by the ARES framework to aid
+    in the exploration of observational research. ARES Indexer leverages output
     from Achilles and DataQualityDashboad packages.
 License: Apache License 2.0
 VignetteBuilder: knitr
@@ -26,8 +26,11 @@ Imports:
   stringr,
   Achilles,
   DatabaseConnector,
-  SqlRender
-Suggests: 
+  SqlRender,
+  DBI,
+  duckdb,
+  arrow
+Suggests:
     knitr,
     rmarkdown
 Remotes:
