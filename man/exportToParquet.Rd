@@ -3,6 +3,9 @@
 \name{exportToParquet}
 \alias{exportToParquet}
 \title{Export to Parquet}
+\usage{
+exportToParquet(sourceFolders)
+}
 \arguments{
 \item{sourceFolders}{A vector of folder locations that contain the files
 exported from Achilles in the ARES Option format (Achilles::exportAO)}

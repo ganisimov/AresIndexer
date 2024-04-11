@@ -4,7 +4,7 @@
 \alias{augmentConceptFiles}
 \title{Augment Concept Files}
 \usage{
-augmentConceptFiles(releaseFolder, format)
+augmentConceptFiles(releaseFolder, format = "json")
 }
 \arguments{
 \item{releaseFolder}{Folder containing a specific release of a data source}
