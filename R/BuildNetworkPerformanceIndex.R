@@ -21,7 +21,8 @@
 #'
 #' @name buildNetworkPerformanceIndex
 #'
-#' @details Builds an index with network performance results for Achilles and DQD execution across all source folders.
+#' @details Builds an index with network performance results for Achilles
+#' and DQD execution across all source folders.
 #' @param sourceFolder Path to source folder
 #'
 #' @return Network performance results object.
@@ -37,8 +38,12 @@ buildNetworkPerformanceIndex <-
 
     options(dplyr.summarise.inform = FALSE)
     networkIndex <- data.frame()
-    analysisDetails <- dplyr::select(Achilles::getAnalysisDetails(), c("analysis_id", "category")) %>%
-      rename(TASK = analysis_id, CATEGORY = category)
+    analysisDetails <-
+      Achilles::getAnalysisDetails() %>%
+      ## different versions of Achilles may use upper or lower case column names
+      dplyr::rename_with(toupper) %>%
+      dplyr::select(c("ANALYSIS_ID", "CATEGORY")) %>%
+      dplyr::rename(TASK = ANALYSIS_ID)
       releaseFolders <- list.dirs(sourceFolder, recursive = F)
       latestRelease <- max(releaseFolders)
 
@@ -59,7 +64,7 @@ buildNetworkPerformanceIndex <-
               dqdData <- DataQualityDashboard::convertJsonResultsFileCase(
                 jsonFilePath = dataQualityResultsFile,
                 writeToFile = FALSE,
-                targetCase = "snake"
+                targetCase = "camel"
               )
               dqdData <- as.data.frame(dqdData)
 
@@ -70,9 +75,12 @@ buildNetworkPerformanceIndex <-
 
               performanceTable <- merge(x=performanceTable,y=analysisDetails,by="TASK",all.x=TRUE)
 
-              dqdTable <- dplyr::select(dqdData, c("CheckResults.checkId", "CheckResults.EXECUTION_TIME", "CheckResults.CATEGORY")) %>%
-                rename(TASK = CheckResults.checkId, TIMING = CheckResults.EXECUTION_TIME, CATEGORY = CheckResults.CATEGORY) %>% mutate(PACKAGE = "DQD") %>%
+              dqdTable <- dplyr::select(dqdData, c("CheckResults.checkId", "CheckResults.executionTime", "CheckResults.category")) %>%
+                rename(TASK = CheckResults.checkId, TIMING = CheckResults.executionTime, CATEGORY = CheckResults.category) %>% mutate(PACKAGE = "DQD") %>%
                 mutate_at("TIMING", str_replace, " secs", "")
+
+              names(performanceTable) <- toupper(names(performanceTable))
+              names(dqdTable) <- toupper(names(dqdTable))
 
               mergedTable <- rbind(performanceTable, dqdTable)
 

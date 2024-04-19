@@ -4,10 +4,12 @@
 \alias{augmentConceptFiles}
 \title{Augment Concept Files}
 \usage{
-augmentConceptFiles(releaseFolder)
+augmentConceptFiles(releaseFolder, format = "json")
 }
 \arguments{
 \item{releaseFolder}{Folder containing a specific release of a data source}
+
+\item{format}{Storage format of concept data: 'json' or 'duckdb'}
 }
 \description{
 Augment Concept Files

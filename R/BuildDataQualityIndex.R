@@ -38,47 +38,63 @@ buildDataQualityIndex <- function(sourceFolders, outputFolder) {
 
   # iterate on sources
   for (sourceFolder in sourceFolders) {
-    historicalIndex <- AresIndexer::buildDataQualityHistoryIndex(sourceFolder)
-    historicalFile <- file.path(sourceFolder, "data-quality-index.json")
-    write(jsonlite::toJSON(historicalIndex),historicalFile)
+
+    # skip index for source if ignore file present
+    if (file.exists(file.path(sourceFolder,".aresIndexIgnore"))){
+
+      writeLines(paste("AresIndexIgnore file present, skipping source folder: ", sourceFolder))
+    }else
+    {
+      historicalIndex <- AresIndexer::buildDataQualityHistoryIndex(sourceFolder)
+      historicalFile <- file.path(sourceFolder, "data-quality-index.json")
+      write(jsonlite::toJSON(historicalIndex),historicalFile)
 
 
-    releaseFolders <- list.dirs(sourceFolder, recursive = F)
-    # iterate on source releases and process all failed results
-    for (releaseFolder in releaseFolders) {
-      dataQualityResultsFile <- file.path(releaseFolder, "dq-result.json")
+      releaseFolders <- list.dirs(sourceFolder, recursive = F)
+      # iterate on source releases and process all failed results
+      for (releaseFolder in releaseFolders) {
 
-      # process each data quality result file
-      if (file.exists(dataQualityResultsFile)) {
-        # dataQualityResults <- jsonlite::fromJSON(dataQualityResultsFile)
-        dataQualityResults <- DataQualityDashboard::convertJsonResultsFileCase(
-          jsonFilePath = dataQualityResultsFile,
-          writeToFile = FALSE,
-          targetCase = "snake"
-        )
-        results <- dataQualityResults$CheckResults
+        # skip index for release if ignore file present
+        if (releaseFolder %in% AresIndexer::getIgnoredReleases(sourceFolder)){
 
-        # for each release, generate a summary of failures by cdm_table_name
-        domainAggregates <- results %>% filter(FAILED==1) %>% count(tolower(CDM_TABLE_NAME))
-        names(domainAggregates) <- c("cdm_table_name", "count_failed")
-        data.table::fwrite(domainAggregates, file.path(releaseFolder,"domain-issues.csv"))
+          writeLines(paste("AresIndexIgnore file present, skipping release folder: ", releaseFolder))
 
-        # collect all failures from this result file for network analysis
-        outColNames <- c("CHECK_NAME", "CHECK_LEVEL", "CDM_TABLE_NAME", "CATEGORY", "SUBCATEGORY", "CONTEXT", "CDM_FIELD_NAME", "CONCEPT_ID", "UNIT_CONCEPT_ID")
-        missingColNames <- setdiff(outColNames, names(results))
-        for (colName in missingColNames) {
-          writeLines(paste0("Expected column is missing in DQD results. Adding column with NA values: ", colName))
-          results[,colName] <- NA
+        }else {
+
+          dataQualityResultsFile <- file.path(releaseFolder, "dq-result.json")
+
+          # process each data quality result file
+          if (file.exists(dataQualityResultsFile)) {
+            dataQualityResults <- DataQualityDashboard::convertJsonResultsFileCase(
+              jsonFilePath = dataQualityResultsFile,
+              writeToFile = FALSE,
+              targetCase = "camel"
+            )
+            results <- dataQualityResults$CheckResults
+
+            # for each release, generate a summary of failures by cdm_table_name
+            domainAggregates <- results %>% filter(failed==1) %>% count(tolower(cdmTableName))
+            names(domainAggregates) <- c("cdm_table_name", "count_failed")
+            data.table::fwrite(domainAggregates, file.path(releaseFolder,"domain-issues.csv"))
+
+            # collect all failures from this result file for network analysis
+            outColNames <- c("checkName", "checkLevel", "cdmTableName", "category", "subcategory", "context", "cdmFieldName", "conceptId", "unitConceptId")
+            missingColNames <- setdiff(outColNames, names(results))
+            for (colName in missingColNames) {
+              writeLines(paste0("Expected column is missing in DQD results. Adding column with NA values: ", colName))
+              results[,colName] <- NA
+            }
+            sourceFailures <- results[results[,"failed"]==1,outColNames]
+            sourceFailures$CDM_SOURCE_NAME <- dataQualityResults$Metadata$cdmSourceName
+            sourceFailures$CDM_SOURCE_ABBREVIATION <- dataQualityResults$Metadata$cdmSourceAbbreviation
+            sourceFailures$CDM_SOURCE_KEY <- gsub(" ","_",dataQualityResults$Metadata$cdmSourceAbbreviation)
+            sourceFailures$RELEASE_NAME <- format(lubridate::ymd(dataQualityResults$Metadata$cdmReleaseDate),"%Y-%m-%d")
+            sourceFailures$RELEASE_ID <- format(lubridate::ymd(dataQualityResults$Metadata$cdmReleaseDate),"%Y%m%d")
+            networkIndex <- rbind(networkIndex, sourceFailures)
+          } else {
+            writeLines(paste("missing data quality result file ",dataQualityResultsFile))
+          }
         }
-        sourceFailures <- results[results[,"FAILED"]==1,outColNames]
-        sourceFailures$CDM_SOURCE_NAME <- dataQualityResults$Metadata$CDM_SOURCE_NAME
-        sourceFailures$CDM_SOURCE_ABBREVIATION <- dataQualityResults$Metadata$CDM_SOURCE_ABBREVIATION
-        sourceFailures$CDM_SOURCE_KEY <- gsub(" ","_",dataQualityResults$Metadata$CDM_SOURCE_ABBREVIATION)
-        sourceFailures$RELEASE_NAME <- format(lubridate::ymd(dataQualityResults$Metadata$CDM_RELEASE_DATE),"%Y-%m-%d")
-        sourceFailures$RELEASE_ID <- format(lubridate::ymd(dataQualityResults$Metadata$CDM_RELEASE_DATE),"%Y%m%d")
-        networkIndex <- rbind(networkIndex, sourceFailures)
-      } else {
-        writeLines(paste("missing data quality result file ",dataQualityResultsFile))
       }
     }
   }
