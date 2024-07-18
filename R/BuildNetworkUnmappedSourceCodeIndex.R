@@ -45,21 +45,20 @@ buildNetworkUnmappedSourceCodeIndex <-
     # iterate on sources
     networkIndex <- data.frame()
     for (sourceFolder in sourceFolders) {
-      
+
       # skip index for source if ignore file present
-      
+
       if (file.exists(file.path(sourceFolder,".aresIndexIgnore"))){
-        
+
         writeLines(paste("AresIndexIngore file present, skipping source folder: ", sourceFolder))
-      }else
-      {
-        # skip for releases where ignore file present
-        releaseFolders<- releaseFolders[!releaseFolders %in% AresIndexer::getIgnoredReleases(sourceFolder)]
-        
+      } else {
         # find the latest release in the source folder
         releaseFolders <- list.dirs(sourceFolder, recursive = F)
         releaseFolders <- sort(releaseFolders, decreasing = T)
-        
+
+        # skip for releases where ignore file present
+        releaseFolders <- releaseFolders[!releaseFolders %in% AresIndexer::getIgnoredReleases(sourceFolder)]
+
         if (length(releaseFolders) > 0) {
           latestReleaseFolder <- releaseFolders[1]
           completenessFile <-

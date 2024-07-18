@@ -32,12 +32,26 @@
 #'
 
 #' @export
-augmentConceptFiles <- function(releaseFolder, format) {
+augmentConceptFiles <- function(
+  releaseFolder,
+  format = "json"
+) {
+  if (!any(format %in% c("json", "duckdb"))) {
+    stop("format must be 'json' or 'duckdb'")
+  }
+
+  message("Format: ", format)
+
   dataQualityResultsFile <- file.path(releaseFolder, "dq-result.json")
   duckdbCon <- NULL
   if (format == "duckdb") {
-    duckdbCon <- DBI::dbConnect(duckdb::duckdb(), dbdir = file.path(releaseFolder, "concepts", 'data.duckdb'), read_only = FALSE)
-    on.exit(DBI::dbDisconnect(duckdbCon, shutdown = TRUE))
+    duckdbCon <- DBI::dbConnect(
+      duckdb::duckdb(
+        dbdir = file.path(releaseFolder, "concepts", "data.duckdb")
+      ),
+      read_only = FALSE
+    )
+    on.exit(DBI::dbDisconnect(duckdbCon, shutdown = TRUE), add = TRUE)
     table <- tbl(duckdbCon, DBI::Id(schema = "concepts", table = "concept_metadata"))
     table <- as.data.frame(table)
     table <- table %>% mutate(COUNT_FAILED = NA, IS_STATIONARY = NA, SEASONALITY_SCORE = NA)
@@ -69,12 +83,6 @@ augmentConceptFiles <- function(releaseFolder, format) {
             CONCEPT_ID = as.integer(trimws(CONCEPT_ID))
           ),
           by = "CONCEPT_ID"
-        )
-        DBI::dbWriteTable(
-          duckdbCon,
-          DBI::Id(schema = "concepts", table = "concept_metadata"),
-          table,
-          overwrite = TRUE
         )
     } else  if (format == "json") {
       if (nrow(conceptAggregates) > 0) {
@@ -123,12 +131,6 @@ augmentConceptFiles <- function(releaseFolder, format) {
             )],
             by = "CONCEPT_ID"
           )
-        DBI::dbWriteTable(
-          duckdbCon,
-          DBI::Id(schema = "concepts", table = "concept_metadata"),
-          table,
-          overwrite = TRUE
-        )
     } else if (format == "json") {
       if (nrow(temporalCharacterization) > 0) {
         for (row in 1:nrow(temporalCharacterization)) {
@@ -151,5 +153,14 @@ augmentConceptFiles <- function(releaseFolder, format) {
     }
   } else {
     writeLines(paste("missing temporal characterization data ", temporalCharacterizationFile))
+  }
+
+  if (format == "duckdb") {
+    DBI::dbWriteTable(
+      duckdbCon,
+      DBI::Id(schema = "concepts", table = "concept_metadata"),
+      table,
+      overwrite = TRUE
+    )
   }
 }
