@@ -67,11 +67,11 @@ augmentDataQualityFiles <- function(sourceFolders) {
 
         mergedData <- mergedData %>%
           mutate(Status = case_when(
-            is.na(FAILED_previous) & FAILED == 1 ~ "NEW",
-            FAILED == 1 & FAILED_previous == 0 ~ "NEW",
-            FAILED == 1 & FAILED_previous == 1 ~ "EXISTING",
-            FAILED == 0 & FAILED_previous == 1 ~ "RESOLVED",
-            FAILED == 0 & FAILED_previous == 0 ~ "STABLE",
+            is.na(failed_previous) & failed == 1 ~ "NEW",
+            failed == 1 & failed_previous == 0 ~ "NEW",
+            failed == 1 & failed_previous == 1 ~ "EXISTING",
+            failed == 0 & failed_previous == 1 ~ "RESOLVED",
+            failed == 0 & failed_previous == 0 ~ "STABLE",
             TRUE ~ "STABLE" # Default case if none of the above match
           )) %>%
           select(-ends_with("_previous"))
@@ -79,7 +79,7 @@ augmentDataQualityFiles <- function(sourceFolders) {
         currentQualityFile$CheckResults <- mergedData
       } else {
         currentChecks <- currentChecks %>%
-          mutate(Status = ifelse(FAILED == 1, "NEW", "STABLE"))
+          mutate(Status = ifelse(failed == 1, "NEW", "STABLE"))
 
         currentQualityFile$CheckResults <- currentChecks
       }
