@@ -39,7 +39,7 @@ buildSourceDataQualityDelta <- function(sourceFolders) {
       data <- fromJSON(dataQualityPath)
 
       if (!is.null(data$CheckResults)) {
-        statuses <- data$CheckResults$Status
+        statuses <- data$CheckResults$delta
         statusCounts <- statusCounts + table(factor(statuses, levels = names(statusCountsTemplate)))
       }
     }
@@ -58,7 +58,7 @@ buildSourceDataQualityDelta <- function(sourceFolders) {
 
       # Create a data frame with correct column names
       countsDf <- as.data.frame(t(counts), stringsAsFactors = FALSE)
-      colnames(countsDf) <- c("Release", names(statusCountsTemplate))
+      colnames(countsDf) <- c("release", names(statusCountsTemplate))
       sourceCounts <- rbind(sourceCounts, countsDf)
     }
     write.csv(sourceCounts, file = file.path(sourceFolder, 'data-quality-delta.csv'), row.names = FALSE)

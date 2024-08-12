@@ -31,8 +31,6 @@
 #'
 #' @export
 #'
-
-
 library(jsonlite)
 library(dplyr)
 
@@ -52,6 +50,7 @@ augmentDataQualityFiles <- function(sourceFolders) {
       writeLines(paste0('Processing issues delta for release: ',currentReleaseName))
       currentQualityFile <- loadDataQualityFile(releases[i])
       currentChecks <- currentQualityFile$CheckResults
+      currentChecks$checkId <- as.character(currentChecks$checkId)
 
       loadedData[[length(loadedData) + 1]] <- currentChecks
 
@@ -66,7 +65,7 @@ augmentDataQualityFiles <- function(sourceFolders) {
           left_join(previousData, by = "checkId", suffix = c("", "_previous"))
 
         mergedData <- mergedData %>%
-          mutate(Status = case_when(
+          mutate(delta = case_when(
             is.na(failed_previous) & failed == 1 ~ "NEW",
             failed == 1 & failed_previous == 0 ~ "NEW",
             failed == 1 & failed_previous == 1 ~ "EXISTING",
@@ -84,9 +83,7 @@ augmentDataQualityFiles <- function(sourceFolders) {
         currentQualityFile$CheckResults <- currentChecks
       }
 
-      write_json(currentQualityFile, file.path(releases[i], "updated_dq-result.json"))
-
-      #write_json(current_json, file.path(releases[i], "dq-result.json"))
+      write_json(currentQualityFile, file.path(releases[i], "dq-result.json"))
 
       # Maintain only the last two loaded datasets
       if (length(loadedData) > 2) {
