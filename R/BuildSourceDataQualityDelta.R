@@ -33,8 +33,9 @@ buildSourceDataQualityDelta <- function(sourceFolders) {
 
   countStatuses <- function(dirPath) {
     statusCounts <- statusCountsTemplate
+    releaseName <- NA
 
-    dataQualityPath <- file.path(dirPath, "updated_dq-result.json")
+    dataQualityPath <- file.path(dirPath, "dq-result.json")
     if (file.exists(dataQualityPath)) {
       data <- fromJSON(dataQualityPath)
 
@@ -42,21 +43,31 @@ buildSourceDataQualityDelta <- function(sourceFolders) {
         statuses <- data$CheckResults$delta
         statusCounts <- statusCounts + table(factor(statuses, levels = names(statusCountsTemplate)))
       }
+
+      if (!is.null(data$Metadata$SOURCE_RELEASE_DATE)) {
+        releaseName <- data$Metadata$SOURCE_RELEASE_DATE
+      }
     }
 
-    return(statusCounts)
+    return(list(statusCounts = statusCounts, releaseName = releaseName))
   }
 
-  for(sourceFolder in sourceFolders) {
+  for (sourceFolder in sourceFolders) {
     writeLines(paste0('Building source quality delta for: ', sourceFolder))
     releases <- list.dirs(sourceFolder, full.names = TRUE, recursive = FALSE)
     sourceCounts <- data.frame()
+
     for (release in releases) {
-      releaseName <- basename(release)
-      counts <- countStatuses(release)
+      result <- countStatuses(release)
+      counts <- result$statusCounts
+      releaseName <- result$releaseName
+
+      if (is.na(releaseName)) {
+        releaseName <- basename(release)
+      }
+
       counts <- c(releaseName, as.numeric(counts))
 
-      # Create a data frame with correct column names
       countsDf <- as.data.frame(t(counts), stringsAsFactors = FALSE)
       colnames(countsDf) <- c("release", names(statusCountsTemplate))
       sourceCounts <- rbind(sourceCounts, countsDf)
