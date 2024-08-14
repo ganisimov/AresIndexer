@@ -44,8 +44,8 @@ buildSourceDataQualityDelta <- function(sourceFolders) {
         statusCounts <- statusCounts + table(factor(statuses, levels = names(statusCountsTemplate)))
       }
 
-      if (!is.null(data$Metadata$SOURCE_RELEASE_DATE)) {
-        releaseName <- data$Metadata$SOURCE_RELEASE_DATE
+      if (!is.null(data$Metadata$cdmReleaseDate)) {
+        releaseName <- data$Metadata$cdmReleaseDate
       }
     }
 
