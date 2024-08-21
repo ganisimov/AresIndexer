@@ -78,7 +78,7 @@ augmentDataQualityFiles <- function(sourceFolders) {
         currentQualityFile$CheckResults <- mergedData
       } else {
         currentChecks <- currentChecks %>%
-          mutate(Status = ifelse(failed == 1, "NEW", "STABLE"))
+          mutate(delta = ifelse(failed == 1, "NEW", "STABLE"))
 
         currentQualityFile$CheckResults <- currentChecks
       }
